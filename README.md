@@ -1,96 +1,48 @@
-# Novely
+<div align="center">
 
-Asisten cerdas perancang **Blueprint Proposal Penelitian** (bisnis & manajemen) dengan metodologi **PLS-SEM** standar publikasi internasional bereputasi (Scopus Q1/Q2).
+# 🎓 Novely
 
-Dibangun dengan Vite + React 19 + TypeScript + Tailwind CSS v4, dengan backend proxy Node.js (Express) untuk AI provider & Scopus.
+### Asisten Cerdas Perancang Blueprint Proposal Penelitian
 
-## Fitur
+*Metodologi PLS-SEM · Standar Publikasi Internasional Bereputasi (Scopus Q1/Q2)*
 
-- **Generate Blueprint Proposal** — masukkan level studi (S1/S2/S3), peminatan, dan konteks penelitian → dapatkan blueprint lengkap: judul, grand theory, penelitian terdahulu, research gaps, research questions, diagram path model (Mermaid), metodologi PLS-SEM, indikator & kuesioner, daftar pustaka.
-- **Referensi literatur Scopus** — pencarian otomatis ke Elsevier Scopus API berdasarkan peminatan (opsional, butuh API key).
-- **Bring Your Own AI Provider** — setiap user bisa memakai provider AI-nya sendiri (OpenAI-compatible) lewat **Pengaturan AI**: base URL + API key + pilih model. Bisa juga memilih tampilan Scopus (Standard / Complete).
-- **Fallback Gemini** — kalau user belum mengisi Pengaturan AI, aplikasi tetap berjalan menggunakan Gemini (via `GEMINI_API_KEY` di environment).
-- **Cetak Proposal** — render blueprint ke PDF via `window.print()`.
+</div>
 
-## Arsitektur
+---
 
-```
-Browser (React SPA)
-  ├── /api/chat  ──►  server.js (Express proxy, port 4001)  ──►  AI provider (OpenAI-compatible)
-  └── /api/models ─►  server.js (Express proxy, port 4001)  ──►  AI provider /models
-  └── Scopus API (langsung dari browser via Elsevier)
-```
+## Tentang Novely
 
-- **Frontend**: Vite + React + Tailwind. Settings user disimpan di `localStorage` (key `novely_ai_settings`), tidak pernah dikirim ke server.
-- **Backend proxy** (`server.js`): meneruskan request AI ke provider yang dikonfigurasi user (untuk menghindari CORS & menjaga key tetap di sisi client). Juga menyediakan endpoint `/api/models` untuk memuat daftar model.
-- **Scopus**: dipanggil langsung dari browser ke `api.elsevier.com` (CORS diizinkan Elsevier).
+**Novely** adalah asisten berbasis kecerdasan buatan yang membantu mahasiswa dan peneliti menyusun **blueprint proposal penelitian** di bidang bisnis dan manajemen — dari ide awal hingga rancangan lengkap yang siap dikembangkan bersama dosen pembimbing.
 
-## Setup Lokal
+Cukup masukkan **level studi**, **peminatan**, dan **konteks penelitian**, lalu Novely merancang proposal secara komprehensif dengan metodologi **PLS-SEM (SmartPLS)** yang lazim digunakan pada publikasi jurnal internasional bereputasi.
 
-**Prerequisites:** Node.js 18+
+## Fitur Utama
 
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
+- **🧠 Blueprint Komprehensif** — menghasilkan judul penelitian, grand theory, penelitian terdahulu, research gaps, pertanyaan penelitian, diagram path model, metodologi, indikator & kuesioner, hingga daftar pustaka.
+- **📚 Referensi Literatur Terkini** — mengolah data publikasi ilmiah internasional (Scopus) agar research gaps dan topik penelitian mengikuti tren terkini.
+- **📊 Diagram Path Model** — visualisasi model penelitian (Mermaid) yang siap dipelajari dan dikembangkan.
+- **🖨️ Cetak Proposal** — blueprint siap dicetak menjadi PDF untuk dibawa ke sesi bimbingan.
+- **🔧 Kendali Penuh di Tangan Anda** — Anda dapat menggunakan penyedia AI (AI provider) pilihan Anda sendiri, lengkap dengan API key dan model yang Anda inginkan.
 
-2. Konfigurasi environment — salin `.env.example` menjadi `.env.local` (opsional, hanya untuk fallback Gemini):
-   ```
-   GEMINI_API_KEY="<API key Gemini kamu>"
-   ```
-   > Gemini hanya dipakai sebagai **fallback** ketika user belum mengisi Pengaturan AI. Tanpa key ini, aplikasi tetap berjalan — user tinggal isi Pengaturan AI di UI.
+## Cara Menggunakan
 
-3. Jalankan backend proxy:
-   ```bash
-   npm run backend
-   # atau langsung: node server.js
-   ```
-   Backend berjalan di `http://localhost:4001`.
+1. **Pilih level studi** — S1 (Skripsi), S2 (Tesis), atau S3 (Disertasi).
+2. **Masukkan peminatan** — topik atau bidang penelitian Anda, misalnya *"Pengaruh kepemimpinan transformasional terhadap kinerja karyawan"*.
+3. **Tentukan konteks** — kerangka penelitian, misalnya lokasi atau objek penelitian (*"UMKM di Jawa Tengah"*).
+4. **Klik *Generate Blueprint*** — Novely akan merancang blueprint proposal Anda.
+5. *(Opsional)* **Atur AI & Scopus** lewat tombol **Pengaturan AI** untuk memakai penyedia AI sendiri atau menambahkan kunci Scopus.
+6. **Cetak** blueprint hasilnya untuk dibawa ke sesi bimbingan.
 
-4. Jalankan frontend (di terminal terpisah):
-   ```bash
-   npm run dev
-   ```
-   Buka http://localhost:3000
+> 💡 **Tips:** Untuk hasil maksimal, gunakan peminatan yang spesifik dan konteks yang jelas. Detail yang lebih kaya akan menghasilkan blueprint yang lebih tajam.
 
-   Atau langsung dua-duanya:
-   ```bash
-   npm run dev:all
-   ```
+## Disclaimer
 
-## Pengaturan AI (di dalam aplikasi)
+Blueprint yang dihasilkan adalah **sintesis awal berbasis kecerdasan buatan** dan **tidak memberikan jaminan kebenaran ilmiah yang mutlak**. Peran dosen pembimbing tetap dominan untuk menelaah, mengarahkan, menentukan, dan menyempurnakan rancangan penelitian Anda.
 
-Tombol **Pengaturan AI** di header aplikasi membuka modal:
+---
 
-- **Base URL Provider** — URL OpenAI-compatible, mis. `https://api.openai.com/v1`, `https://api.groq.com/openai/v1`, `http://localhost:11434/v1` (Ollama).
-- **API Key** — key milik user sendiri (disimpan di localStorage).
-- **Muat Model** — memuat daftar model dari provider; pilih model dari dropdown.
-- **API Key Scopus (Opsional)** — key dari https://dev.elsevier.com untuk referensi literatur.
-- **View Scopus** — `Standard` (gratis, semua akun) atau `Complete` (butuh akses premium/institusi).
+<div align="center">
 
-Kalau user mengosongkan semua, aplikasi memakai fallback Gemini.
+*Novely — Rancang penelitian Anda dengan percaya diri.*
 
-## Environment Variables
-
-| Variable | Wajib? | Deskripsi |
-|----------|--------|-----------|
-| `GEMINI_API_KEY` | Opsional | Fallback Gemini ketika user belum mengisi Pengaturan AI |
-| `SCOPUS_API_KEY` | Opsional | Default key Scopus (bisa juga diisi user di Pengaturan AI) |
-| `APP_URL` | Opsional | URL publik aplikasi (untuk referensi diri) |
-
-## Scripts
-
-| Script | Fungsi |
-|--------|--------|
-| `npm run dev` | Jalankan frontend Vite (port 3000) |
-| `npm run backend` | Jalankan backend proxy Express (port 4001) |
-| `npm run dev:all` | Jalankan frontend + backend sekaligus |
-| `npm run build` | Build produksi ke `dist/` |
-| `npm run preview` | Preview hasil build |
-
-## Deploy
-
-1. Build: `npm run build`
-2. Jalankan backend + sajikan `dist/` dengan Nginx (lihat pola reverse-proxy standar: `root` ke `dist/`, `location /api/` → `http://127.0.0.1:4001`).
-3. Pastikan `server.js` berjalan (PM2 / systemd / screen).
-4. Atur env `GEMINI_API_KEY` di environment produksi untuk fallback Gemini.
+</div>
