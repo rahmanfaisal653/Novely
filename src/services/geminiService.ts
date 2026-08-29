@@ -80,6 +80,7 @@ Saat pengguna memberikan input, kamu HARUS memberikan output berurutan dengan st
 6. VISUALISASI PATH MODEL (MERMAID.JS):
    - Buat kode Mermaid 'graph LR' (Left to Right / Landscape) di dalam blok kode markdown \`\`\`mermaid. 
    - Gunakan (-->) untuk jalur direct/mediasi dan (-.->) untuk efek moderasi.
+   - ATURAN SINTAKS WAJIB: Setiap node TANPA spasi dan TANPA karakter khusus di dalam label. Format label hanya boleh: NamaVariabel (huruf/angka tanpa spasi), ATAU "LabelPendek" (satu kata, tanpa spasi). Contoh BENAR: A["Kinerja"] --> B["Inovasi"]; Contoh SALAH: A["Kinerja Karyawan di UMKM"] --> B["Inovasi Produk"]. JANGAN gunakan titik, koma, tanda kutip ganda di dalam label, atau tanda kurung. Setiap baris harus berbentuk: NodeA --> NodeB ATAU NodeA -.-> NodeB. Seluruh kode mermaid harus valid dan bisa di-parse Mermaid tanpa error.
 
 7. METODOLOGI PENELITIAN & PLS-SEM:
    - Unit Analisis: Siapa subjek dan objeknya.

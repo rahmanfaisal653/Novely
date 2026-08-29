@@ -23,8 +23,28 @@ const Mermaid: React.FC<MermaidProps> = ({ chart }) => {
       
       // We need to render explicitly because contentLoaded might not catch dynamic updates well
       const renderChart = async () => {
+        // Auto-sanitize: fix common Mermaid label issues before render.
+        // Mermaid chokes on spaces/special chars inside ["..."] labels
+        // (e.g. A["Kinerja Karyawan di UMKM"]). Replace inner spaces with
+        // nothing and drop quotes to make the label parseable.
+        let safeChart = chart;
         try {
-          const { svg } = await mermaid.render(`mermaid-${Math.random().toString(36).substr(2, 9)}`, chart);
+          safeChart = chart
+            .replace(/\["([^"\]]*)"\]/g, (m, inner) => {
+              const cleaned = (inner || '')
+                .replace(/\s+/g, '')
+                .replace(/[^A-Za-z0-9_]/g, '');
+              return cleaned ? `["${cleaned}"]` : '[?]';
+            })
+            .replace(/\[([^"\]\[]+)\]/g, (m, inner) => {
+              const cleaned = (inner || '').replace(/\s+/g, '').replace(/[^A-Za-z0-9_]/g, '');
+              return cleaned ? `[${cleaned}]` : '[?]';
+            });
+        } catch {
+          safeChart = chart;
+        }
+        try {
+          const { svg } = await mermaid.render(`mermaid-${Math.random().toString(36).substr(2, 9)}`, safeChart);
           if (ref.current) {
             ref.current.innerHTML = svg;
           }
