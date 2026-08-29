@@ -25,21 +25,28 @@ const Mermaid: React.FC<MermaidProps> = ({ chart }) => {
       const renderChart = async () => {
         // Auto-sanitize: fix common Mermaid label issues before render.
         // Mermaid chokes on spaces/special chars inside ["..."] labels
-        // (e.g. A["Kinerja Karyawan di UMKM"]). Replace inner spaces with
-        // nothing and drop quotes to make the label parseable.
+        // (e.g. A["Kinerja Karyawan di UMKM"]), leading 'o'/'x' node ids
+        // (circle/cross edges), and lowercase 'end' (breaks flowchart).
         let safeChart = chart;
         try {
           safeChart = chart
+            // 1. Clean ["..."] labels: strip spaces & non-alphanumeric (keep underscores)
             .replace(/\["([^"\]]*)"\]/g, (m, inner) => {
               const cleaned = (inner || '')
                 .replace(/\s+/g, '')
                 .replace(/[^A-Za-z0-9_]/g, '');
               return cleaned ? `["${cleaned}"]` : '[?]';
             })
+            // 2. Clean bare [label] (no quotes): same treatment
             .replace(/\[([^"\]\[]+)\]/g, (m, inner) => {
               const cleaned = (inner || '').replace(/\s+/g, '').replace(/[^A-Za-z0-9_]/g, '');
               return cleaned ? `[${cleaned}]` : '[?]';
-            });
+            })
+            // 3. Prefix node ids that start with 'o'/'x' (avoid circle/cross edge)
+            .replace(/^\s*([ox])([A-Za-z0-9_]+)\s*(\[|-->|-\.->)/gm, 'N$1$2$3')
+            // 4. Lowercase standalone 'end' node → 'End' (lowercase 'end' breaks flowchart)
+            .replace(/\["end"\]|\[end\]/g, '[End]')
+            .replace(/\bend\b/g, 'End');
         } catch {
           safeChart = chart;
         }

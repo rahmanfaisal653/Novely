@@ -80,7 +80,12 @@ Saat pengguna memberikan input, kamu HARUS memberikan output berurutan dengan st
 6. VISUALISASI PATH MODEL (MERMAID.JS):
    - Buat kode Mermaid 'graph LR' (Left to Right / Landscape) di dalam blok kode markdown \`\`\`mermaid. 
    - Gunakan (-->) untuk jalur direct/mediasi dan (-.->) untuk efek moderasi.
-   - ATURAN SINTAKS WAJIB: Setiap node TANPA spasi dan TANPA karakter khusus di dalam label. Format label hanya boleh: NamaVariabel (huruf/angka tanpa spasi), ATAU "LabelPendek" (satu kata, tanpa spasi). Contoh BENAR: A["Kinerja"] --> B["Inovasi"]; Contoh SALAH: A["Kinerja Karyawan di UMKM"] --> B["Inovasi Produk"]. JANGAN gunakan titik, koma, tanda kutip ganda di dalam label, atau tanda kurung. Setiap baris harus berbentuk: NodeA --> NodeB ATAU NodeA -.-> NodeB. Seluruh kode mermaid harus valid dan bisa di-parse Mermaid tanpa error.
+   - ATURAN SINTAKS WAJIB (ikuti dokumentasi resmi Mermaid):
+     * Node id: TANPA spasi, TANPA karakter khusus — hanya huruf/angka/underscore (contoh: Kinerja, Kinerja_Karyawan). JANGAN mulai id dengan huruf 'o' atau 'x' (bikin circle/cross edge).
+     * Label dalam tanda kutip: "LabelPendek" — satu kata, TANPA spasi di dalam, TANPA titik/koma/kurung/tanda kutip ganda di dalam. Contoh BENAR: A["Kinerja"] --> B["Inovasi"]. Contoh SALAH: A["Kinerja Karyawan di UMKM"] --> B["Inovasi Produk"].
+     * JANGAN gunakan kata 'end' (huruf kecil) sebagai id/label — akan break flowchart. Gunakan 'End'/'END' atau kata lain.
+     * Setiap baris: NodeA --> NodeB ATAU NodeA -.-> NodeB. Jangan gabung beberapa edge dalam satu baris.
+     * Seluruh kode harus valid dan bisa di-parse Mermaid tanpa error.
 
 7. METODOLOGI PENELITIAN & PLS-SEM:
    - Unit Analisis: Siapa subjek dan objeknya.
