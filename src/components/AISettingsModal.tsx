@@ -1,10 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import {
-  AISettings,
-  fetchModels,
-  fetchServerGeminiKey,
-} from '../services/aiClient';
-import { X, Loader2, RefreshCw, KeyRound, Server, Cpu, CheckCircle2, Database, Eye, EyeOff, Sparkles } from 'lucide-react';
+import React, { useState } from 'react';
+import { AISettings, fetchModels } from '../services/aiClient';
+import { X, Loader2, RefreshCw, KeyRound, Server, Cpu, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 
 interface Props {
   settings: AISettings;
@@ -16,28 +12,11 @@ export default function AISettingsModal({ settings, onSave, onClose }: Props) {
   const [serverUrl, setServerUrl] = useState(settings.serverUrl);
   const [apiKey, setApiKey] = useState(settings.apiKey);
   const [model, setModel] = useState(settings.model);
-  const [geminiApiKey, setGeminiApiKey] = useState(settings.geminiApiKey);
-  const [scopusApiKey, setScopusApiKey] = useState(settings.scopusApiKey);
-  const [scopusView, setScopusView] = useState(settings.scopusView || 'standard');
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [loadingModels, setLoadingModels] = useState(false);
   const [modelError, setModelError] = useState('');
   const [showKey, setShowKey] = useState(false);
-  const [showScopusKey, setShowScopusKey] = useState(true);
-  const [showGeminiKey, setShowGeminiKey] = useState(true);
   const [saved, setSaved] = useState(false);
-
-  // Load the server-default Gemini key (.env) and prefill the field if the
-  // user hasn't set their own yet — so the form shows it's ready to use.
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      if (geminiApiKey.trim()) return; // user already has their own key
-      const serverKey = await fetchServerGeminiKey();
-      if (!cancelled && serverKey) setGeminiApiKey(serverKey);
-    })();
-    return () => { cancelled = true; };
-  }, []);
 
   const handleFetchModels = async () => {
     if (!serverUrl.trim() || !apiKey.trim()) {
@@ -67,9 +46,6 @@ export default function AISettingsModal({ settings, onSave, onClose }: Props) {
       serverUrl: serverUrl.trim(),
       apiKey: apiKey.trim(),
       model: serverUrl.trim() && apiKey.trim() ? model.trim() : '',
-      geminiApiKey: geminiApiKey.trim(),
-      scopusApiKey: scopusApiKey.trim(),
-      scopusView: scopusView,
     });
     setSaved(true);
     setTimeout(onClose, 800);
@@ -177,84 +153,6 @@ export default function AISettingsModal({ settings, onSave, onClose }: Props) {
             </p>
             <div className="mt-2 rounded-lg bg-indigo-50 border border-indigo-100 px-3 py-2 text-xs text-indigo-700">
               <span className="font-semibold">Tips:</span> pilih model dengan kualitas terbaik untuk hasil blueprint yang lebih akurat dan lengkap. Model yang lebih baru/unggul umumnya menghasilkan diagram path model yang lebih baik.
-            </div>
-          </div>
-
-          {/* Gemini API Key (default built-in) */}
-          <div className="border-t border-slate-100 pt-4">
-            <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-              <Sparkles className="w-3.5 h-3.5" />
-              API Key Gemini
-            </label>
-            <div className="relative">
-              <input
-                type={showGeminiKey ? 'text' : 'password'}
-                value={geminiApiKey}
-                onChange={(e) => setGeminiApiKey(e.target.value)}
-                placeholder="Gemini API key"
-                className="w-full px-4 py-2.5 pr-10 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-              />
-              <button
-                type="button"
-                onClick={() => setShowGeminiKey(!showGeminiKey)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                title={showGeminiKey ? 'Sembunyikan' : 'Lihat'}
-              >
-                {showGeminiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-            <div className="mt-1.5">
-              <p className="text-xs text-slate-400">
-                Kosongkan untuk memakai key default server. Isi jika ingin memakai key Gemini sendiri.
-              </p>
-            </div>
-          </div>
-
-          {/* Scopus API Key */}
-          <div className="border-t border-slate-100 pt-4">
-            <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-              <Database className="w-3.5 h-3.5" />
-              API Key Scopus (Opsional)
-            </label>
-            <div className="relative">
-              <input
-                type={showScopusKey ? 'text' : 'password'}
-                value={scopusApiKey}
-                onChange={(e) => setScopusApiKey(e.target.value)}
-                placeholder="Dapatkan di dev.elsevier.com"
-                className="w-full px-4 py-2.5 pr-10 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-              />
-              <button
-                type="button"
-                onClick={() => setShowScopusKey(!showScopusKey)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                title={showScopusKey ? 'Sembunyikan' : 'Lihat'}
-              >
-                {showScopusKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-            <div className="mt-1.5">
-              <p className="text-xs text-slate-400">
-                Default sudah terisi — referensi literatur langsung aktif. Ganti jika ingin memakai key Scopus sendiri.
-              </p>
-            </div>
-
-            {/* Scopus View */}
-            <div className="mt-3">
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                View Scopus
-              </label>
-              <select
-                value={scopusView}  
-                onChange={(e) => setScopusView(e.target.value)}
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-              >
-                <option value="standard">Standard (non-premium)</option>
-                <option value="complete">Complete (premium)</option>
-              </select>
-              <p className="mt-1.5 text-xs text-slate-400">
-                Standard tersedia untuk semua akun, Complete memerlukan akses premium/institusi.
-              </p>
             </div>
           </div>
 

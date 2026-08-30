@@ -58,12 +58,7 @@ app.post('/api/gemini', async (req, res) => {
   }
 });
 
-// GET /api/gemini-key — expose the server-default Gemini key so the
-// settings UI can show it as pre-filled (read-only display). The key
-// lives in .env (never in the repo/bundle); users can still override.
-app.get('/api/gemini-key', (req, res) => {
-  return res.json({ key: process.env.GEMINI_API_KEY || '' });
-});
+// GET /api/models — list models from the user's provider.
 app.get('/api/models', async (req, res) => {
   const serverUrl = req.header('x-server-url');
   const apiKey = req.header('x-api-key');

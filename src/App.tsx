@@ -53,7 +53,7 @@ export default function App() {
 
     try {
       setLoadingStep('Mengambil data referensi dari database publikasi internasional...');
-      const scopusData = await searchScopus(specialization, aiSettings.scopusApiKey, aiSettings.scopusView);
+      const scopusData = await searchScopus(specialization);
       
       setLoadingStep('Novely sedang merancang blueprint berbasis literatur terkini...');
       const result = await generateResearchBlueprint(level, specialization, location, scopusData);

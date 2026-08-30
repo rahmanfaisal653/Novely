@@ -7,23 +7,12 @@ export interface AISettings {
   serverUrl: string;
   apiKey: string;
   model: string;
-  /** Gemini API key — default built-in, bisa diganti user. Tanpa URL (Gemini native). */
-  geminiApiKey: string;
-  /** Optional Elsevier Scopus API key (from dev.elsevier.com). */
-  scopusApiKey: string;
-  /** Scopus view: 'standard' (free) or 'complete' (premium only). */
-  scopusView: string;
 }
 
 export const DEFAULT_SETTINGS: AISettings = {
   serverUrl: '',
   apiKey: '',
   model: '',
-  // Default Gemini key dipegang SERVER (.env) — bukan di frontend.
-  // Kosong berarti app pakai key server via /api/gemini.
-  geminiApiKey: '',
-  scopusApiKey: 'd7c988d15ff04d05ebf23dc7332454e9',
-  scopusView: 'standard',
 };
 
 const STORAGE_KEY = 'novely_ai_settings';
@@ -37,9 +26,6 @@ export function loadSettings(): AISettings {
       serverUrl: parsed.serverUrl || '',
       apiKey: parsed.apiKey || '',
       model: parsed.model || '',
-      geminiApiKey: parsed.geminiApiKey || DEFAULT_SETTINGS.geminiApiKey,
-      scopusApiKey: parsed.scopusApiKey || DEFAULT_SETTINGS.scopusApiKey,
-      scopusView: parsed.scopusView || 'standard',
     };
   } catch {
     return { ...DEFAULT_SETTINGS };
@@ -56,18 +42,6 @@ export function hasCustomSettings(s: AISettings): boolean {
 
 export interface ModelInfo {
   id: string;
-}
-
-/** Fetch the server-default Gemini key (from .env) so the settings UI can show it. */
-export async function fetchServerGeminiKey(): Promise<string> {
-  try {
-    const res = await fetch('/api/gemini-key');
-    if (!res.ok) return '';
-    const data = await res.json();
-    return typeof data?.key === 'string' ? data.key : '';
-  } catch {
-    return '';
-  }
 }
 
 /** Ask our backend proxy to list models from the user's provider. */

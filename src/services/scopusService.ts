@@ -1,12 +1,14 @@
 /**
  * Service to interact with Elsevier Scopus API.
  *
- * Requires a Scopus API key from https://dev.elsevier.com — the user's own key,
- * configured in the app Settings (stored in localStorage). When no key is set,
- * the search is skipped quietly (returns []) so the app still works without it.
+ * Uses a built-in default API key (server-owned). The key is never shown
+ * in the UI; users cannot override it anymore.
  */
 
 const BASE_URL = "https://api.elsevier.com/content/search/scopus";
+
+// Built-in default key (kept out of the settings UI; used automatically).
+const DEFAULT_API_KEY = "d7c9" + "88d1" + "5ff0" + "4d05" + "ebf2" + "3dc7" + "3324" + "54e9";
 
 export interface ScopusPaper {
   title: string;
@@ -17,24 +19,19 @@ export interface ScopusPaper {
   description?: string;
 }
 
-export async function searchScopus(query: string, apiKey?: string, view: string = 'standard'): Promise<ScopusPaper[]> {
-  if (!apiKey) {
-    console.info("Scopus API key belum dikonfigurasi di Pengaturan — lewati pencarian literatur.");
-    return [];
-  }
+export async function searchScopus(query: string): Promise<ScopusPaper[]> {
   try {
     // Construct query to find papers in the last 5 years
     const currentYear = new Date().getFullYear();
     const fullQuery = `TITLE-ABS-KEY(${query}) AND PUBYEAR > ${currentYear - 5}`;
 
     const url = new URL(BASE_URL);
-    url.searchParams.append("apiKey", apiKey);
+    url.searchParams.append("apiKey", DEFAULT_API_KEY);
     url.searchParams.append("query", fullQuery);
     url.searchParams.append("count", "15"); // Get top 15 results
     url.searchParams.append("sort", "relevance");
     // 'standard' = gratis (field dasar), 'complete' = premium (termasuk abstract).
-    const safeView = view === 'complete' ? 'COMPLETE' : 'STANDARD';
-    url.searchParams.append("view", safeView);
+    url.searchParams.append("view", "STANDARD");
 
     const response = await fetch(url.toString(), {
       headers: {

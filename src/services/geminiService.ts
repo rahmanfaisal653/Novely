@@ -2,9 +2,8 @@ import { generateChat, loadSettings, AISettings } from './aiClient';
 
 /**
  * Generate a research blueprint via the user's configured AI provider.
- * Falls back to the built-in Gemini default (geminiApiKey dari settings,
- * atau GEMINI_API_KEY dari env) when the user has not configured a custom
- * provider in Settings.
+ * Falls back to the built-in Gemini default (server-side key via /api/gemini)
+ * when the user has not configured a custom provider in Settings.
  */
 export async function generateResearchBlueprint(
   level: string,
@@ -20,10 +19,9 @@ export async function generateResearchBlueprint(
     return generateChat(settings, '', prompt);
   }
 
-  // Default: Gemini via the official SDK. Priority:
-  // 1. geminiApiKey dari settings (default built-in, bisa diganti user)
-  // 2. process.env.GEMINI_API_KEY (fallback terakhir)
-  return generateWithGemini(level, specialization, location, scopusData, settings.geminiApiKey);
+  // Default: Gemini via the official SDK.
+  // Key dipegang SERVER (.env) — dipakai lewat proxy /api/gemini.
+  return generateWithGemini(level, specialization, location, scopusData);
 }
 
 function buildPrompt(
@@ -114,25 +112,13 @@ async function generateWithGemini(
   level: string,
   specialization: string,
   location: string,
-  scopusData: any[],
-  apiKey: string
+  scopusData: any[]
 ): Promise<string> {
   const MODEL_NAME = 'gemini-3.6-flash';
   const systemInstruction = `Kamu adalah "Novely"... (default Gemini persona, lihat di bawah)`;
   const prompt = buildPrompt(level, specialization, location, scopusData, systemInstruction);
 
-  // Jika user mengisi key Gemini sendiri → panggil langsung dari browser.
-  if (apiKey) {
-    const { GoogleGenAI } = await import('@google/genai');
-    const ai = new GoogleGenAI({ apiKey });
-    const response = await ai.models.generateContent({
-      model: MODEL_NAME,
-      contents: [{ parts: [{ text: prompt }] }],
-    });
-    return response.text || 'Gagal menghasilkan blueprint. Silakan coba lagi.';
-  }
-
-  // Jika kosong → pakai key default server (.env) via proxy /api/gemini.
+  // Pakai key default server (.env) via proxy /api/gemini.
   const res = await fetch('/api/gemini', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
