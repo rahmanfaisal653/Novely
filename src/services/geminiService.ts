@@ -117,18 +117,34 @@ async function generateWithGemini(
   scopusData: any[],
   apiKey: string
 ): Promise<string> {
-  const { GoogleGenAI } = await import('@google/genai');
   const MODEL_NAME = 'gemini-3.1-pro-preview';
-  const key = apiKey || ((process.env.GEMINI_API_KEY as string) || '');
-  const ai = new GoogleGenAI({ apiKey: key });
-
   const systemInstruction = `Kamu adalah "Novely"... (default Gemini persona, lihat di bawah)`;
   const prompt = buildPrompt(level, specialization, location, scopusData, systemInstruction);
 
-  const response = await ai.models.generateContent({
-    model: MODEL_NAME,
-    contents: [{ parts: [{ text: prompt }] }],
-  });
+  // Jika user mengisi key Gemini sendiri → panggil langsung dari browser.
+  if (apiKey) {
+    const { GoogleGenAI } = await import('@google/genai');
+    const ai = new GoogleGenAI({ apiKey });
+    const response = await ai.models.generateContent({
+      model: MODEL_NAME,
+      contents: [{ parts: [{ text: prompt }] }],
+    });
+    return response.text || 'Gagal menghasilkan blueprint. Silakan coba lagi.';
+  }
 
-  return response.text || 'Gagal menghasilkan blueprint. Silakan coba lagi.';
+  // Jika kosong → pakai key default server (.env) via proxy /api/gemini.
+  const res = await fetch('/api/gemini', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: MODEL_NAME,
+      prompt,
+    }),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Gagal menghubungi Gemini (${res.status})${text ? ': ' + text : ''}`);
+  }
+  const data = await res.json();
+  return data?.text || 'Gagal menghasilkan blueprint. Silakan coba lagi.';
 }

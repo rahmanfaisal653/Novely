@@ -197,7 +197,7 @@ export default function AISettingsModal({ settings, onSave, onClose }: Props) {
             </div>
             <div className="mt-1.5">
               <p className="text-xs text-slate-400">
-                Default sudah terisi — aplikasi langsung bisa dipakai. Ganti jika ingin memakai key Gemini sendiri.
+                Kosongkan untuk memakai key default server. Isi jika ingin memakai key Gemini sendiri.
               </p>
             </div>
           </div>

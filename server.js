@@ -9,12 +9,54 @@
 
 import express from 'express';
 import cors from 'cors';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 4001;
 
 app.use(cors());
 app.use(express.json({ limit: '2mb' }));
+
+// POST /api/gemini — call Gemini SDK server-side.
+// Uses GEMINI_API_KEY from .env by default; if the client sends its own
+// key (overrideApiKey), that takes priority. Keeps the default key
+// server-side (never exposed to the browser / GitHub).
+app.post('/api/gemini', async (req, res) => {
+  const { model, system, prompt, overrideApiKey } = req.body || {};
+  const logTag = '[novely /api/gemini]';
+  const apiKey = overrideApiKey || process.env.GEMINI_API_KEY || '';
+
+  if (!model || !prompt) {
+    return res.status(400).json({ error: 'model dan prompt wajib diisi.' });
+  }
+  if (!apiKey) {
+    return res.status(400).json({ error: 'API key Gemini belum dikonfigurasi di server.' });
+  }
+
+  const startedAt = Date.now();
+  console.log(`${logTag} request model=${model} (${overrideApiKey ? 'user key' : 'server default key'})`);
+
+  try {
+    const { GoogleGenAI } = await import('@google/genai');
+    const ai = new GoogleGenAI({ apiKey });
+    const response = await ai.models.generateContent({
+      model,
+      contents: [{ parts: [{ text: prompt }] }],
+      config: {
+        ...(system ? { systemInstruction: system } : {}),
+        temperature: 0.7,
+      },
+    });
+    const text = response?.text || '';
+    console.log(`${logTag} done in ${((Date.now() - startedAt) / 1000).toFixed(1)}s (${text.length} chars)`);
+    return res.json({ text });
+  } catch (e) {
+    console.log(`${logTag} ERROR: ${e.message}`);
+    return res.status(502).json({ error: `Gagal memanggil Gemini: ${e.message}` });
+  }
+});
 
 // GET /api/models — list models from user's OpenAI-compatible provider
 app.get('/api/models', async (req, res) => {
