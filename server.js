@@ -39,13 +39,20 @@ app.get('/api/models', async (req, res) => {
   }
 });
 
-// POST /api/chat — chat completion via user's provider
+// POST /api/chat — chat completion via user's provider, streamed as SSE.
+// Response shape: `data: {"content": "<delta>"}\n\n` for each chunk,
+// then a final `data: [DONE]\n\n`.
 app.post('/api/chat', async (req, res) => {
   const { serverUrl, apiKey, model, system, prompt } = req.body || {};
+  const logTag = `[novely /api/chat]`;
+
   if (!serverUrl || !apiKey || !model || !prompt) {
     return res.status(400).json({ error: 'serverUrl, apiKey, model, dan prompt wajib diisi.' });
   }
   const baseUrl = serverUrl.replace(/\/+$/, '');
+  const startedAt = Date.now();
+  console.log(`${logTag} request model=${model}`);
+
   try {
     const r = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
@@ -61,20 +68,75 @@ app.post('/api/chat', async (req, res) => {
         ],
         temperature: 0.7,
         max_tokens: 8192,
+        stream: true,
       }),
     });
+
     if (!r.ok) {
       const t = await r.text().catch(() => '');
+      console.log(`${logTag} provider error ${r.status}: ${t.slice(0, 300)}`);
       return res.status(r.status).json({ error: `Provider menolak: ${r.status} ${t}` });
     }
-    const data = await r.json();
-    const content = data?.choices?.[0]?.message?.content;
-    if (typeof content !== 'string') {
-      return res.status(502).json({ error: 'Provider tidak mengembalikan konten.' });
+    if (!r.body) {
+      console.log(`${logTag} provider returned no body`);
+      return res.status(502).json({ error: 'Provider tidak mengembalikan body.' });
     }
-    return res.json({ content });
+
+    // SSE headers
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive',
+      'X-Accel-Buffering': 'no', // disable nginx buffering → flush per chunk
+    });
+
+    const reader = r.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let totalChars = 0;
+
+    const flush = () => {
+      try { res.write(buffer); buffer = ''; } catch { /* client gone */ }
+    };
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      // Split on SSE double-newline boundaries and forward each complete event.
+      let idx;
+      while ((idx = buffer.indexOf('\n\n')) !== -1) {
+        const event = buffer.slice(0, idx);
+        buffer = buffer.slice(idx + 2);
+        for (const line of event.split('\n')) {
+          if (!line.startsWith('data:')) continue;
+          const payload = line.slice(5).trim();
+          if (!payload || payload === '[DONE]') continue;
+          try {
+            const parsed = JSON.parse(payload);
+            const delta = parsed?.choices?.[0]?.delta?.content;
+            if (typeof delta === 'string' && delta.length > 0) {
+              totalChars += delta.length;
+              res.write(`data: ${JSON.stringify({ content: delta })}\n\n`);
+            }
+          } catch { /* skip malformed */ }
+        }
+      }
+      flush();
+    }
+
+    // Flush any trailing partial event
+    flush();
+    res.write(`data: [DONE]\n\n`);
+    res.end();
+    console.log(`${logTag} done in ${((Date.now() - startedAt) / 1000).toFixed(1)}s (${totalChars} chars)`);
   } catch (e) {
-    return res.status(502).json({ error: `Gagal menghubungi provider: ${e.message}` });
+    console.log(`${logTag} ERROR: ${e.message}`);
+    if (!res.headersSent) {
+      return res.status(502).json({ error: `Gagal menghubungi provider: ${e.message}` });
+    }
+    try { res.end(); } catch { /* already closed */ }
   }
 });
 

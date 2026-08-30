@@ -7,6 +7,8 @@ export interface AISettings {
   serverUrl: string;
   apiKey: string;
   model: string;
+  /** Gemini API key — default built-in, bisa diganti user. Tanpa URL (Gemini native). */
+  geminiApiKey: string;
   /** Optional Elsevier Scopus API key (from dev.elsevier.com). */
   scopusApiKey: string;
   /** Scopus view: 'standard' (free) or 'complete' (premium only). */
@@ -17,6 +19,7 @@ export const DEFAULT_SETTINGS: AISettings = {
   serverUrl: '',
   apiKey: '',
   model: '',
+  geminiApiKey: 'AQ.Ab8RN6KvkJz_aWBUgX4h7OOKSyUCKRurMdeFSNXjxpgp7sNKHw',
   scopusApiKey: '',
   scopusView: 'standard',
 };
@@ -32,6 +35,7 @@ export function loadSettings(): AISettings {
       serverUrl: parsed.serverUrl || '',
       apiKey: parsed.apiKey || '',
       model: parsed.model || '',
+      geminiApiKey: parsed.geminiApiKey || DEFAULT_SETTINGS.geminiApiKey,
       scopusApiKey: parsed.scopusApiKey || '',
       scopusView: parsed.scopusView || 'standard',
     };
@@ -93,9 +97,48 @@ export async function generateChat(
     const text = await res.text().catch(() => '');
     throw new Error(`Gagal menghubungi AI (${res.status})${text ? ': ' + text : ''}`);
   }
-  const data = await res.json();
-  if (!data || typeof data.content !== 'string') {
-    throw new Error('Respons AI tidak valid.');
+  if (!res.body) {
+    throw new Error('Respons AI tidak valid (body kosong).');
   }
-  return data.content;
+
+  // Parse SSE stream: lines `data: {...}` with { content: "<delta>" },
+  // terminated by `data: [DONE]`.
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let full = '';
+  const errorMsg = (s: string) => `Gagal membaca respons AI: ${s}`;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    let idx;
+    while ((idx = buffer.indexOf('\n\n')) !== -1) {
+      const event = buffer.slice(0, idx);
+      buffer = buffer.slice(idx + 2);
+      for (const line of event.split('\n')) {
+        if (!line.startsWith('data:')) continue;
+        const payload = line.slice(5).trim();
+        if (!payload || payload === '[DONE]') continue;
+        try {
+          const parsed = JSON.parse(payload);
+          if (parsed.error) {
+            throw new Error(errorMsg(parsed.error));
+          }
+          const delta = parsed?.content;
+          if (typeof delta === 'string') full += delta;
+        } catch (e) {
+          if (e instanceof Error && e.message.startsWith(errorMsg(''))) throw e;
+          // Malformed SSE line — skip
+        }
+      }
+    }
+  }
+
+  if (!full.trim()) {
+    throw new Error('Respons AI tidak valid (kosong).');
+  }
+  return full;
 }

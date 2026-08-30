@@ -2,8 +2,9 @@ import { generateChat, loadSettings, AISettings } from './aiClient';
 
 /**
  * Generate a research blueprint via the user's configured AI provider.
- * Falls back to the built-in Gemini default (GEMINI_API_KEY from env) when
- * the user has not configured a custom provider in Settings.
+ * Falls back to the built-in Gemini default (geminiApiKey dari settings,
+ * atau GEMINI_API_KEY dari env) when the user has not configured a custom
+ * provider in Settings.
  */
 export async function generateResearchBlueprint(
   level: string,
@@ -19,8 +20,10 @@ export async function generateResearchBlueprint(
     return generateChat(settings, '', prompt);
   }
 
-  // Default: Gemini via the official SDK (as before).
-  return generateWithGemini(level, specialization, location, scopusData);
+  // Default: Gemini via the official SDK. Priority:
+  // 1. geminiApiKey dari settings (default built-in, bisa diganti user)
+  // 2. process.env.GEMINI_API_KEY (fallback terakhir)
+  return generateWithGemini(level, specialization, location, scopusData, settings.geminiApiKey);
 }
 
 function buildPrompt(
@@ -111,11 +114,13 @@ async function generateWithGemini(
   level: string,
   specialization: string,
   location: string,
-  scopusData: any[]
+  scopusData: any[],
+  apiKey: string
 ): Promise<string> {
   const { GoogleGenAI } = await import('@google/genai');
   const MODEL_NAME = 'gemini-3.1-pro-preview';
-  const ai = new GoogleGenAI({ apiKey: (process as any).env.GEMINI_API_KEY || '' });
+  const key = apiKey || ((process.env.GEMINI_API_KEY as string) || '');
+  const ai = new GoogleGenAI({ apiKey: key });
 
   const systemInstruction = `Kamu adalah "Novely"... (default Gemini persona, lihat di bawah)`;
   const prompt = buildPrompt(level, specialization, location, scopusData, systemInstruction);
