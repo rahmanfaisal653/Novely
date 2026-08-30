@@ -58,6 +58,18 @@ export interface ModelInfo {
   id: string;
 }
 
+/** Fetch the server-default Gemini key (from .env) so the settings UI can show it. */
+export async function fetchServerGeminiKey(): Promise<string> {
+  try {
+    const res = await fetch('/api/gemini-key');
+    if (!res.ok) return '';
+    const data = await res.json();
+    return typeof data?.key === 'string' ? data.key : '';
+  } catch {
+    return '';
+  }
+}
+
 /** Ask our backend proxy to list models from the user's provider. */
 export async function fetchModels(serverUrl: string, apiKey: string): Promise<ModelInfo[]> {
   const res = await fetch('/api/models', {
