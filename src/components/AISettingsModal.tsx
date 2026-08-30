@@ -24,8 +24,8 @@ export default function AISettingsModal({ settings, onSave, onClose }: Props) {
   const [loadingModels, setLoadingModels] = useState(false);
   const [modelError, setModelError] = useState('');
   const [showKey, setShowKey] = useState(false);
-  const [showScopusKey, setShowScopusKey] = useState(false);
-  const [showGeminiKey, setShowGeminiKey] = useState(false);
+  const [showScopusKey, setShowScopusKey] = useState(true);
+  const [showGeminiKey, setShowGeminiKey] = useState(true);
   const [saved, setSaved] = useState(false);
 
   const handleFetchModels = async () => {
