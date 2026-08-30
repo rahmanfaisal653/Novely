@@ -227,7 +227,7 @@ export default function AISettingsModal({ settings, onSave, onClose }: Props) {
             </div>
             <div className="mt-1.5">
               <p className="text-xs text-slate-400">
-                Wajib, agar dapat mengambil referensi literatur real dari Scopus.
+                Default sudah terisi — referensi literatur langsung aktif. Ganti jika ingin memakai key Scopus sendiri.
               </p>
             </div>
 

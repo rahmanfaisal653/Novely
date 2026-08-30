@@ -20,7 +20,7 @@ export const DEFAULT_SETTINGS: AISettings = {
   apiKey: '',
   model: '',
   geminiApiKey: 'AQ.Ab8RN6KvkJz_aWBUgX4h7OOKSyUCKRurMdeFSNXjxpgp7sNKHw',
-  scopusApiKey: '',
+  scopusApiKey: 'd7c988d15ff04d05ebf23dc7332454e9',
   scopusView: 'standard',
 };
 
@@ -36,7 +36,7 @@ export function loadSettings(): AISettings {
       apiKey: parsed.apiKey || '',
       model: parsed.model || '',
       geminiApiKey: parsed.geminiApiKey || DEFAULT_SETTINGS.geminiApiKey,
-      scopusApiKey: parsed.scopusApiKey || '',
+      scopusApiKey: parsed.scopusApiKey || DEFAULT_SETTINGS.scopusApiKey,
       scopusView: parsed.scopusView || 'standard',
     };
   } catch {
