@@ -117,7 +117,7 @@ async function generateWithGemini(
   scopusData: any[],
   apiKey: string
 ): Promise<string> {
-  const MODEL_NAME = 'gemini-3.1-pro-preview';
+  const MODEL_NAME = 'gemini-3.6-flash';
   const systemInstruction = `Kamu adalah "Novely"... (default Gemini persona, lihat di bawah)`;
   const prompt = buildPrompt(level, specialization, location, scopusData, systemInstruction);
 
